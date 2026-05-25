@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<robot name="laziik" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:include filename="$(find laziik_description)/urdf/materials.xacro" />
+<xacro:include filename="$(find laziik_description)/urdf/laziik.trans" />
+<xacro:include filename="$(find laziik_description)/urdf/laziik.gazebo" />
+<link name="base_link">
+  <inertial>
+    <origin xyz="-0.05932137408519983 0.00485715431015118 1.203172886082136e-17" rpy="0 0 0"/>
+    <mass value="0.47952902076485493"/>
+    <inertia ixx="0.001947" iyy="0.002499" izz="0.00066" ixy="1.5e-05" iyz="-0.0" ixz="0.0"/>
+  </inertial>
+  <visual>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://laziik_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+    <material name="silver"/>
+  </visual>
+  <collision>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <geometry>
+      <mesh filename="package://laziik_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+    </geometry>
+  </collision>
+</link>
+
+</robot>

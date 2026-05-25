@@ -1,0 +1,69 @@
+import rclpy
+from rclpy.node import Node
+import math
+import sys
+
+sys.path.insert(0, '/path/to/st3215_driver/st3215_driver')
+from stservo_sdk import *
+
+class ST3215Node(Node):
+    def __init__(self):
+        super().__init__('st3215_driver')
+
+        self.declare_parameter('port', '/dev/ttyUSB0')
+        self.declare_parameter('baudrate', 1000000)
+
+        port = self.get_parameter('port').value
+        baud = self.get_parameter('baudrate').value
+
+        self.portHandler   = PortHandler(port)
+        self.packetHandler = PacketHandler(STS_PROTOCOL_END)
+
+        if not self.portHandler.openPort():
+            self.get_logger().error(f'Nie można otworzyć portu {port}')
+            raise RuntimeError('Port open failed')
+
+        self.portHandler.setBaudRate(baud)
+        self.get_logger().info(f'Połączono z {port} @ {baud}')
+
+        self.angle     = 0.0
+        self.direction = 1
+        self.step      = 0.05  # rad per tick
+
+        self.create_timer(0.05, self.tick)
+        self.get_logger().info('Test — serwo #1 kręci się 0°↔180°')
+
+    def tick(self):
+        steps = int((self.angle / (2 * math.pi)) * 4096) % 4096
+
+        ret, comm, hw = self.packetHandler.WritePosEx(
+            self.portHandler,
+            1,      # servo ID
+            steps,  # pozycja
+            500,    # prędkość
+            50      # akceleracja
+        )
+
+        if comm != COMM_SUCCESS or hw != 0:
+            self.get_logger().warn(f'Błąd serwa: comm={comm} hw={hw}')
+
+        # wahadło 0 ↔ π
+        self.angle += self.step * self.direction
+        if self.angle >= math.pi:
+            self.direction = -1
+        elif self.angle <= 0.0:
+            self.direction = 1
+
+    def destroy_node(self):
+        self.portHandler.closePort()
+        super().destroy_node()
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = ST3215Node()
+    try:
+        rclpy.spin(node)
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
